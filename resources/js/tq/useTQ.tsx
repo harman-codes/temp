@@ -50,7 +50,14 @@ function useTQ<TDataType = Record<string, Record<string, unknown>[]>>({
             }
 
             if (targetMode === 'update') {
-                const response = await axios.put(variables.url, variables.data);
+                if (variables.data instanceof FormData) {
+                    variables.data.append('_method', 'PUT');
+                }
+                const response = await axios.post(
+                    variables.url,
+                    variables.data,
+                );
+                // const response = await axios.put(variables.url, variables.data);
                 return response.data;
             }
 
