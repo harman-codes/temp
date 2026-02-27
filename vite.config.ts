@@ -21,11 +21,7 @@ export default defineConfig({
             formVariants: true,
         }),
     ],
-    build: {
-        chunkSizeWarningLimit: 500,
-    },
     esbuild: {
         jsx: 'automatic',
-        legalComments: 'none',
     },
 });
