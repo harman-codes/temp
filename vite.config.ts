@@ -22,7 +22,7 @@ export default defineConfig({
         }),
     ],
     build: {
-        chunkSizeWarningLimit: 1000,
+        chunkSizeWarningLimit: 500,
     },
     esbuild: {
         jsx: 'automatic',
