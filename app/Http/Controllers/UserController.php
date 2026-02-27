@@ -32,7 +32,7 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|min:3|max:255',
-            'email' => 'required|email|unique:users,email',
+            'email' => 'required|email|min:2|unique:users,email',
             'password' => 'required|string|min:4',
         ]);
 
@@ -71,7 +71,7 @@ class UserController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,'.$id,
+            'email' => 'required|email|min:2|unique:users,email,'.$id,
             'password' => 'nullable|string|min:4',
         ]);
 
@@ -91,15 +91,15 @@ class UserController extends Controller
         // throw new \Exception('A valid user ID is required.');
         $isSuccessful = User::destroy($id);
 
-        if (!$isSuccessful) {
-//            return response()->json([
-//                'users' => User::orderBy('created_at', 'desc')->get(['id', 'name', 'email']),
-//            ]);
-//        } else {
+        if (! $isSuccessful) {
+            //            return response()->json([
+            //                'users' => User::orderBy('created_at', 'desc')->get(['id', 'name', 'email']),
+            //            ]);
+            //        } else {
             return response()->json([
                 'message' => 'Invalid User',
             ], 400);
-        }else{
+        } else {
             return response()->json([]);
         }
     }

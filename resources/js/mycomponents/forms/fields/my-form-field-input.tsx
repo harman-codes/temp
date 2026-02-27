@@ -76,6 +76,13 @@ export function MyFormFieldInput({
             {/*{state.errors[name] && (*/}
             {/*    <FieldError>{state.errors[name]}</FieldError>*/}
             {/*)}*/}
+            {state.mutation.error?.response?.data?.errors &&
+                state.mutation.error?.response?.data?.errors[name]?.map(
+                    (error, index) => {
+                        console.log(error);
+                        return <FieldError key={index}>{error}</FieldError>;
+                    },
+                )}
             {description && <FieldDescription>{description}</FieldDescription>}
         </Field>
     );

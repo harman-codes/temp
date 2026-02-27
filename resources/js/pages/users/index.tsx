@@ -26,6 +26,7 @@ import type {
 } from '@/pages/users/types';
 import TQForm from '@/tq/tq-form';
 import useTQ from '@/tq/useTQ';
+import DepartmentController from '@/actions/App/Http/Controllers/DepartmentController';
 
 function Index() {
     const [defaultFormValue, setdefaultFormValue] = useState<
@@ -39,7 +40,8 @@ function Index() {
         },
     });
 
-    console.log(state.mutation.error?.response?.data);
+    // console.log(state.mutation.error?.response?.data?.errors);
+    console.log(state.mutation.error?.response);
 
     // const handleCreate = () => {
     //     state.createRecord({ url: store().url, dataKey: 'users' });
@@ -144,6 +146,7 @@ function Index() {
                                     onClick={() =>
                                         state.deleteRecord({
                                             url: destroy(user.id).url,
+                                            id: user.id,
                                             dataKey: 'users',
                                             modalTitle: 'Delete User',
                                             modalDescription: `Are you sure you want to delete ${user.name}?`,
@@ -179,11 +182,16 @@ function Index() {
                                         className="cursor-pointer"
                                         size="sm"
                                         variant="secondary"
-                                        // onClick={() =>
-                                        //     state.updateRecord({
-                                        //         url: depa
-                                        //     })
-                                        // }
+                                        onClick={() => {
+                                            setdefaultFormValue(department);
+                                            state.updateRecord({
+                                                url: DepartmentController.update(
+                                                    department.id,
+                                                ).url,
+                                                id: department.id,
+                                                dataKey: 'departments',
+                                            });
+                                        }}
                                     >
                                         <PencilIcon />
                                     </Button>
@@ -196,6 +204,7 @@ function Index() {
                                                 url: deleteDepartment(
                                                     department.id,
                                                 ).url,
+                                                id: department.id,
                                                 dataKey: 'departments',
                                             })
                                         }

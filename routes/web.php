@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\UserController;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
@@ -20,6 +21,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('users', UserController::class);
     Route::get('getusers', [UserController::class, 'getUsers'])->name('getusers');
     Route::delete('deleteDepartment/{id}', [UserController::class, 'deleteDepartment'])->name('deleteDepartment');
+    Route::resource('departments', DepartmentController::class);
 });
 
 Route::get('temp', function () {

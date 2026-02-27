@@ -21,13 +21,13 @@ export type TQReturnType<
         isError: boolean;
         isSuccess: boolean;
         isFetching: boolean;
-        error: Error | null;
+        error: Error | undefined;
     };
     mutation: {
         isPending: boolean;
         isError: boolean;
         isSuccess: boolean;
-        error: Error | null;
+        error: Error | undefined;
         data: TDataType | undefined;
     };
     mode: TQmodeType;
@@ -37,11 +37,13 @@ export type TQReturnType<
     modalDescription: string;
     deleteRecord: ({
         url,
+        id,
         dataKey,
         modalTitle,
         modalDescription,
     }: {
         url: string;
+        id: number | string;
         dataKey: string;
         modalTitle?: string;
         modalDescription?: string;

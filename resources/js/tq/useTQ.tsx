@@ -1,7 +1,12 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+    onlineManager,
+    useMutation,
+    useQuery,
+    useQueryClient,
+} from '@tanstack/react-query';
 import axios from 'axios';
 import type { SubmitEvent } from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import type { TQmodeType, TQPropsType } from '@/tq/tq-types';
 
@@ -19,6 +24,17 @@ function useTQ<TDataType = Record<string, Record<string, unknown>[]>>({
     const [currentModalTitle, setCurrentModalTitle] = useState<string>('');
     const [currentModalDescription, setCurrentModalDescription] =
         useState<string>('');
+    const [isOnline, setIsOnline] = useState<boolean>(onlineManager.isOnline());
+
+    useEffect(() => {
+        const unsubscribe = onlineManager.subscribe(() => {
+            const status = onlineManager.isOnline();
+            // console.log('Network changed:', status);
+            setIsOnline(status);
+        });
+
+        return unsubscribe;
+    }, []);
 
     // Get Data from a url
     const { data, isPending, isError, isSuccess, isFetching, error } =
@@ -65,6 +81,13 @@ function useTQ<TDataType = Record<string, Record<string, unknown>[]>>({
             return response.data;
         },
         onMutate: async (variables) => {
+            // Check if the browser is online
+            if (!isOnline) {
+                throw new Error(
+                    'You are offline. Please check your internet connection.',
+                );
+            }
+
             const targetMode = variables.mode;
             if (!targetMode) return;
 
@@ -184,7 +207,9 @@ function useTQ<TDataType = Record<string, Record<string, unknown>[]>>({
                 toast.error(error.response.data.message);
                 return;
             }
-            toast.error(`Error: Failed to ${targetMode} record`);
+            toast.error(
+                error?.message || `Error: Failed to ${targetMode} record`,
+            );
         },
         onSuccess: (data, variables) => {
             const targetMode = variables.mode;
@@ -196,7 +221,7 @@ function useTQ<TDataType = Record<string, Record<string, unknown>[]>>({
             reset();
             toast.success(successMessage);
         },
-        onSettled: (data) => {
+        onSettled: () => {
             queryClient.invalidateQueries({
                 queryKey: [...query.queryKey],
             });
@@ -211,20 +236,24 @@ function useTQ<TDataType = Record<string, Record<string, unknown>[]>>({
         setCurrentModalTitle('');
         setCurrentModalDescription('');
         setmode(null);
+        mutation.reset();
     };
 
     const deleteRecord = ({
         url,
+        id,
         dataKey,
         modalTitle,
         modalDescription,
     }: {
         url: string;
+        id: number | string;
         dataKey: string;
         modalTitle?: string;
         modalDescription?: string;
     }) => {
         setUrl(url);
+        setRecordId(id);
         setDataKey(dataKey);
         setmode('delete');
         setCurrentModalTitle(modalTitle || 'Delete');
@@ -235,11 +264,13 @@ function useTQ<TDataType = Record<string, Record<string, unknown>[]>>({
     };
 
     const confirmDelete = () => {
-        if (!url || !dataKey) {
+        if (!url || !dataKey || !recordId) {
+            toast.error('Mode, url or dataKey is not defined');
             return;
         }
         mutation.mutate({
             url: url,
+            id: recordId,
             dataKey: dataKey,
             mode: 'delete',
         });
