@@ -21,13 +21,13 @@ export type TQReturnType<
         isError: boolean;
         isSuccess: boolean;
         isFetching: boolean;
-        error: Error | undefined;
+        error: Error | undefined | null;
     };
     mutation: {
         isPending: boolean;
         isError: boolean;
         isSuccess: boolean;
-        error: Error | undefined;
+        error: Error | undefined | null;
         data: TDataType | undefined;
     };
     mode: TQmodeType;
@@ -55,11 +55,15 @@ export type TQReturnType<
         dataKey,
         modalTitle,
         modalDescription,
+        withoutForm,
+        data,
     }: {
         url: string;
         dataKey: string;
         modalTitle?: string;
         modalDescription?: string;
+        withoutForm?: boolean;
+        data?: Record<string, unknown> | null;
     }) => void;
     updateRecord: ({
         url,
@@ -67,12 +71,25 @@ export type TQReturnType<
         dataKey,
         modalTitle,
         modalDescription,
+        withoutForm,
+        data,
     }: {
         url: string;
         id: number | string;
         dataKey: string;
         modalTitle?: string;
         modalDescription?: string;
+        withoutForm?: boolean;
+        data?: Record<string, unknown> | null;
+    }) => void;
+    post: ({
+        url,
+        dataKey,
+        data,
+    }: {
+        url: string;
+        dataKey: string;
+        data?: Record<string, unknown> | null;
     }) => void;
     reset: () => void;
 };

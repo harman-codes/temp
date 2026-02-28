@@ -75,11 +75,18 @@ class UserController extends Controller
             'password' => 'nullable|string|min:4',
         ]);
 
-        $user = User::where('id', $id)->update($validated);
+        $user = User::where('id', $id)->first();
+        $isSuccessful = $user->update($validated);
+
+        if (! $isSuccessful) {
+            return response()->json([
+                'message' => 'Invalid User',
+            ], 400);
+        }
 
         return response()->json([
             'message' => 'Just updated',
-            'user' => User::whereId($id)->first(),
+            'user' => $user,
         ]);
     }
 

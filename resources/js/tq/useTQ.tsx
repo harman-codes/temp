@@ -25,6 +25,9 @@ function useTQ<TDataType = Record<string, Record<string, unknown>[]>>({
     const [currentModalDescription, setCurrentModalDescription] =
         useState<string>('');
     const [isOnline, setIsOnline] = useState<boolean>(onlineManager.isOnline());
+    const [dataState, setdataState] = useState<Record<string, unknown> | null>(
+        null,
+    );
 
     useEffect(() => {
         const unsubscribe = onlineManager.subscribe(() => {
@@ -54,20 +57,33 @@ function useTQ<TDataType = Record<string, Record<string, unknown>[]>>({
     const mutation = useMutation({
         mutationFn: async (variables: {
             url: string;
-            data?: FormData | Record<string, unknown> | { id: number | string };
+            data?: FormData | Record<string, unknown> | null;
             mode: TQmodeType;
             id?: number | string;
             dataKey: string;
         }) => {
             const targetMode = variables.mode;
+            /*****************************************************/
             if (targetMode === 'delete') {
                 const response = await axios.delete(variables.url);
                 return response.data;
+            }
+            /*****************************************************/
+
+            if (!variables.data) {
+                throw new Error('No data');
             }
 
             if (targetMode === 'update') {
                 if (variables.data instanceof FormData) {
                     variables.data.append('_method', 'PUT');
+                    // variables.data.append('id', variables.id?.toString() ?? '');
+                } else {
+                    variables.data = {
+                        ...variables.data,
+                        _method: 'PUT',
+                        // id: variables.id?.toString() ?? '',
+                    };
                 }
                 const response = await axios.post(
                     variables.url,
@@ -77,6 +93,7 @@ function useTQ<TDataType = Record<string, Record<string, unknown>[]>>({
                 return response.data;
             }
 
+            //For create and common post operation
             const response = await axios.post(variables.url, variables.data);
             return response.data;
         },
@@ -236,6 +253,7 @@ function useTQ<TDataType = Record<string, Record<string, unknown>[]>>({
         setCurrentModalTitle('');
         setCurrentModalDescription('');
         setmode(null);
+        setdataState(null);
         mutation.reset();
     };
 
@@ -280,8 +298,18 @@ function useTQ<TDataType = Record<string, Record<string, unknown>[]>>({
         event.preventDefault();
 
         if (!mode || !url || !dataKey) {
-            toast.error('Mode, url or dataKey is not defined');
+            toast.error('mode, url or dataKey is not defined');
             return;
+        }
+        const formData = new FormData(event.target as HTMLFormElement);
+
+        // console.log(Object.fromEntries(formData));
+
+        //Optional: Send extra data (in object format) along with the form
+        if (dataState && Object.keys(dataState).length > 0) {
+            Object.entries(dataState).forEach(([key, value]) => {
+                formData.append(key, String(value));
+            });
         }
 
         mutation.mutate({
@@ -289,7 +317,7 @@ function useTQ<TDataType = Record<string, Record<string, unknown>[]>>({
             id: recordId,
             mode: mode,
             dataKey: dataKey,
-            data: new FormData(event.target as HTMLFormElement),
+            data: formData,
         });
     };
 
@@ -298,21 +326,43 @@ function useTQ<TDataType = Record<string, Record<string, unknown>[]>>({
         dataKey,
         modalTitle,
         modalDescription,
+        withoutForm = false,
+        data = null,
     }: {
         url: string;
         dataKey: string;
         modalTitle?: string;
         modalDescription?: string;
+        withoutForm?: boolean;
+        data?: Record<string, unknown> | null;
     }) => {
-        setUrl(url);
-        setDataKey(dataKey);
-        setRecordId(undefined);
-        setmode('create');
-        setCurrentModalTitle(modalTitle || 'Create');
-        setCurrentModalDescription(
-            modalDescription || 'Enter the details below.',
-        );
-        setOpenModal(true);
+        if (withoutForm) {
+            if (data && Object.keys(data).length > 0) {
+                mutation.mutate({
+                    url: url,
+                    id: undefined,
+                    mode: 'create',
+                    dataKey: dataKey,
+                    data: data,
+                });
+            } else {
+                toast.error('No data provided');
+            }
+        } else {
+            setUrl(url);
+            setDataKey(dataKey);
+            setRecordId(undefined);
+            setmode('create');
+            setCurrentModalTitle(modalTitle || 'Create');
+            setCurrentModalDescription(
+                modalDescription || 'Enter the details below.',
+            );
+            //Optional : send extra data with the form
+            if (data && Object.keys(data).length > 0) {
+                setdataState((prev) => (prev ? { ...prev, ...data } : data));
+            }
+            setOpenModal(true);
+        }
     };
 
     const updateRecord = ({
@@ -321,22 +371,65 @@ function useTQ<TDataType = Record<string, Record<string, unknown>[]>>({
         dataKey,
         modalTitle,
         modalDescription,
+        withoutForm = false,
+        data = null,
     }: {
         url: string;
         id: number | string;
         dataKey: string;
         modalTitle?: string;
         modalDescription?: string;
+        withoutForm?: boolean;
+        data?: Record<string, unknown> | null;
     }) => {
-        setUrl(url);
-        setRecordId(id);
-        setDataKey(dataKey);
-        setmode('update');
-        setCurrentModalTitle(modalTitle || 'Update');
-        setCurrentModalDescription(
-            modalDescription || 'Change the details below to update.',
-        );
-        setOpenModal(true);
+        if (withoutForm) {
+            if (data && Object.keys(data).length > 0) {
+                mutation.mutate({
+                    url: url,
+                    id: id,
+                    mode: 'update',
+                    dataKey: dataKey,
+                    data: data,
+                });
+            } else {
+                toast.error('No data provided');
+            }
+        } else {
+            setUrl(url);
+            setRecordId(id);
+            setDataKey(dataKey);
+            setmode('update');
+            setCurrentModalTitle(modalTitle || 'Update');
+            setCurrentModalDescription(
+                modalDescription || 'Change the details below to update.',
+            );
+            //Optional : send extra data with the form
+            if (data && Object.keys(data).length > 0) {
+                setdataState((prev) => (prev ? { ...prev, ...data } : data));
+            }
+            setOpenModal(true);
+        }
+    };
+
+    const post = ({
+        url,
+        dataKey,
+        data = null,
+    }: {
+        url: string;
+        dataKey: string;
+        data?: Record<string, unknown> | null;
+    }) => {
+        if (data && Object.keys(data).length > 0) {
+            mutation.mutate({
+                url: url,
+                mode: 'post',
+                dataKey: dataKey,
+                data: data,
+            });
+        } else {
+            toast.error('No data provided');
+        }
     };
 
     return {
@@ -366,6 +459,7 @@ function useTQ<TDataType = Record<string, Record<string, unknown>[]>>({
             onSubmit,
             createRecord,
             updateRecord,
+            post,
             reset,
         },
     };

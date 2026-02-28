@@ -28,7 +28,23 @@ class DepartmentController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'code' => 'required|string|max:255',
+        ]);
+
+        $department = Department::create($validated);
+
+        if ($department) {
+            return response()->json([
+                'message' => 'Department created',
+                'department' => $department,
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Department not created',
+        ], 400);
     }
 
     /**
@@ -57,12 +73,18 @@ class DepartmentController extends Controller
             'code' => 'required|string|max:255',
         ]);
 
-        Department::where('id', $id)->update($validated);
+        $isSuccessful = Department::where('id', $id)->update($validated);
+
+        if ($isSuccessful) {
+            return response()->json([
+                'message' => 'Department updated',
+                'department' => Department::whereId($id)->first(),
+            ]);
+        }
 
         return response()->json([
-            'message' => 'Department updated',
-            'department' => Department::whereId($id)->first(),
-        ]);
+            'message' => 'Department not updated',
+        ], 400);
     }
 
     /**
